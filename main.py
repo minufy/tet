@@ -44,10 +44,13 @@ class Game:
         gap = 2.8
         for i in range(5):
             mino_type = self.queue[i]
+            x = 0
             y = 0
             if mino_type == "I":
                 y = -0.5
-            self.draw_mino(screen, pos, 11, y+1+i*gap, mino_type, 0, MINO_COLORS[mino_type])
+            if mino_type == "O":
+                x = -0.5
+            self.draw_mino(screen, pos, 11+x, y+1+i*gap, mino_type, 0, MINO_COLORS[mino_type])
 
     def hard_drop(self):
         self.held = False
@@ -127,8 +130,8 @@ class Game:
     def pop_queue(self):
         return Mino(self.queue.pop(0), 3, self.board.margin_top-4)
 
-game = Game(time.time()*1000)
-bot = Bot(game, 1)
+game = Game(time.time()*10000)
+bot = Bot(game)
 
 while True:
     screen.fill("#333333")
@@ -140,13 +143,17 @@ while True:
             sys.exit()
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_r:
-                game = Game(time.time()*1000)
+                game = Game(time.time()*10000)
+            # if event.key == pygame.K_RETURN:
+            #     bot.update(10)
             game.keydown(event.key)
         if event.type == pygame.KEYUP:
             game.keyup(event.key)
 
+    # print(game.queue, bot.queue)
     game.draw(screen)
     game.update(dt)
+    # bot.get_score(game.board)
     bot.update(dt)
 
     pygame.display.update()
