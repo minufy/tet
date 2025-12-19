@@ -26,18 +26,11 @@ game_timer = 0
 game_time = 5000
 weights = {
     "line": random.randint(0, 100)/50,
-    "change_rate": random.randint(0, 100)/50,
-    "holes": random.randint(0, 100)/50,
+    "change_rate": -random.randint(0, 100)/50,
+    "holes": -random.randint(0, 100)/50,
 }
 
-{'line': 0.96, 'change_rate': 0.97, 'holes': 0.76}
-{'line': 0.6, 'change_rate': 0.82, 'holes': 0.55}
-{'line': 1.48, 'change_rate': 1.68, 'holes': 1.42}
-{'line': 0.02, 'change_rate': 0.94, 'holes': 0.57}
-{'line': 0.21, 'change_rate': 0.25, 'holes': 0.31}
-{'line': 0.4, 'change_rate': 0.29, 'holes': 0.29}
-
-input_time = 10
+input_time = 0
 bot = Bot(game, input_time, weights)
 
 while True:
@@ -83,8 +76,8 @@ while True:
         game = Game(-1)
         weights = {
             "line": random.randint(0, 100)/100,
-            "change_rate": random.randint(0, 100)/100,
-            "holes": random.randint(0, 100)/100,
+            "change_rate": -random.randint(0, 100)/50,
+            "holes": -random.randint(0, 100)/50,
         }
         bot = Bot(game, input_time, weights)
 

@@ -15,5 +15,5 @@ ATTACK_TABLE = {
     4: 4
 }
 
-DEPTH = 1
-BEST_COUNT = 2 
+DEPTH = 0
+BEST_COUNT = 0

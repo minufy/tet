@@ -156,8 +156,8 @@ class Bot:
 
     def get_score(self, board):
         lines = ATTACK_TABLE[self.get_lines(board)]*self.weights["line"]
-        change_rate = -self.get_change_rate(board)*self.weights["change_rate"]
-        holes = -self.get_holes(board)*self.weights["holes"]
+        change_rate = self.get_change_rate(board)*self.weights["change_rate"]
+        holes = self.get_holes(board)*self.weights["holes"]
         return lines+change_rate+holes
 
     def research(self, depth, move):
