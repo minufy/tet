@@ -55,7 +55,7 @@ class Board:
                     pygame.draw.rect(screen, MINO_COLORS[self.grid[y][x]], rect)
 
     def line_clear(self):
-        for y in range(self.h-1, -1, -1):
+        for y in range(self.h):
             for x in range(self.w):
                 if self.grid[y][x] == " ":
                     break
@@ -156,20 +156,34 @@ class Game:
         self.queue = []
         self.next()
         self.handler = Handler(117, 0, 0)
+        self.hold_type = None
+        self.held = False
 
-    def draw_mino(self, screen, pos):
-        for y, row in enumerate(MINO_SHAPES[self.mino.type][str(self.mino.rotation)]):
+    def draw_mino(self, screen, pos, mx, my, mt, mr, color=None):
+        if color == None:
+            color = MINO_COLORS[mt]
+        for y, row in enumerate(MINO_SHAPES[mt][str(mr)]):
             for x, dot in enumerate(row):
                 if dot:
-                    rect = ((self.mino.x+x)*UNIT+pos[0], (self.mino.y+y)*UNIT+pos[1], UNIT, UNIT)
-                    pygame.draw.rect(screen, MINO_COLORS[self.mino.type], rect)
+                    rect = ((mx+x)*UNIT+pos[0], (my+y)*UNIT+pos[1], UNIT, UNIT)
+                    pygame.draw.rect(screen, color, rect)
     
     def next(self):
         if len(self.queue) <= 5:
             self.queue += self.rng.shuffleArray(MINO_TYPES.copy())
         self.mino = self.pop_queue()
 
+    def draw_next(self, screen, pos):
+        gap = 2.8
+        for i in range(5):
+            mino_type = self.queue[i]
+            y = 0
+            if mino_type == "I":
+                y = -0.5
+            self.draw_mino(screen, pos, 11, y+1+i*gap, mino_type, 0, MINO_COLORS[mino_type])
+
     def hard_drop(self):
+        self.held = False
         for _ in range(self.board.h):
             if self.mino.move(0, 1, self.board) == False:
                 self.board.place(self.mino)
@@ -193,6 +207,8 @@ class Game:
             self.mino.rotate(2, self.board)
         if event.key == pygame.K_SPACE:
             self.hard_drop()
+        if event.key == pygame.K_LSHIFT:
+            self.hold()
 
     def keyup(self, event):
         if event.key == pygame.K_RIGHT:
@@ -201,6 +217,17 @@ class Game:
             self.handler.up_left()
         if event.key == pygame.K_DOWN:
             self.handler.up_soft_drop()
+
+    def hold(self):
+        if self.held:
+            return
+        old_type = self.mino.type
+        if self.hold_type == None:
+            self.next()
+        else:
+            self.mino = Mino(self.hold_type, 3, self.board.margin_top-4)
+        self.hold_type = old_type
+        self.held = True
 
     def update(self, dt):
         movement_queue = self.handler.update(dt, self.board)
@@ -212,18 +239,20 @@ class Game:
         for _ in range(self.board.h):
             if shadow_mino.move(0, 1, self.board) == False:
                 break
-        for y, row in enumerate(MINO_SHAPES[self.mino.type][str(self.mino.rotation)]):
-            for x, dot in enumerate(row):
-                if dot:
-                    rect = ((shadow_mino.x+x)*UNIT+pos[0], (shadow_mino.y+y)*UNIT+pos[1], UNIT, UNIT)
-                    pygame.draw.rect(screen, MINO_COLORS["H"], rect)
+        self.draw_mino(screen, pos, self.mino.x, shadow_mino.y, self.mino.type, self.mino.rotation, MINO_COLORS["X"])
 
     def draw(self, screen):
         pos = (SCREEN_W/2-UNIT*10/2, SCREEN_H/2-UNIT*20/2)
-        margin_pos = (pos[0], pos[1]-self.board.margin_top*UNIT)
-        self.board.draw(screen, margin_pos)
-        self.draw_shadow(screen, margin_pos)
-        self.draw_mino(screen, margin_pos)
+        pos_m = (pos[0], pos[1]-self.board.margin_top*UNIT)
+        self.board.draw(screen, pos_m)
+        self.draw_shadow(screen, pos_m)
+        self.draw_mino(screen, pos_m, self.mino.x, self.mino.y, self.mino.type, self.mino.rotation)
+        if self.hold_type:
+            color = MINO_COLORS[self.hold_type]
+            if self.held:
+                color = MINO_COLORS["H"]
+            self.draw_mino(screen, pos, -5, 1, self.hold_type, 0, color)
+        self.draw_next(screen, pos)
 
     def fill_queue(self):
         self.queue += self.rng.shuffleArray(MINO_TYPES.copy())
@@ -240,6 +269,8 @@ while True:
             pygame.quit()
             sys.exit()
         if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_r:
+                game = Game()
             game.keydown(event)
         if event.type == pygame.KEYUP:
             game.keyup(event)

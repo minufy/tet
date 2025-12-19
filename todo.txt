@@ -1,4 +1,2 @@
-next
-hold
-restart
+death
 ai
