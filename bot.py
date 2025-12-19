@@ -149,7 +149,7 @@ class Bot:
         change_rate = -self.get_change_rate(board)
         holes = -self.get_holes(board)
         # height = self.get_height(board)*0.02
-        print(lines, change_rate, holes)
+        # print(lines, change_rate, holes)
         # return lines+change_rate+holes+height
         return lines+change_rate+holes
 
