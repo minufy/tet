@@ -36,4 +36,3 @@ class Board:
             for x, dot in enumerate(row):
                 if dot:
                     self.grid[mino.y+y][mino.x+x] = mino.type
-        self.line_clear()

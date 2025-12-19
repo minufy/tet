@@ -1,5 +1,6 @@
 import pygame
 from minos import *
+from utils import *
 
 def keydown(key):
     return pygame.event.Event(pygame.KEYDOWN, {
@@ -24,9 +25,11 @@ class TestBoard:
         return s
 
 class Move:
-    def __init__(self, mino, score):
+    def __init__(self, mino, score, board, hold):
         self.mino = mino
         self.score = score
+        self.board = board
+        self.hold = hold
 
 class Input:
     def __init__(self, key, time):
@@ -39,15 +42,20 @@ class Input:
         self.hold_timer += dt
  
 class Bot:
-    def __init__(self, game, input_time=100):
+    def __init__(self, game, input_time, weights):
         self.game = game
-        self.input_timer = 0
-        self.input_time = input_time
         self.board = TestBoard(self.game.board.grid)
         self.queue = [self.game.mino.type]+self.game.queue.copy()
         self.last_queue = []
         self.inputs = []
-        
+        self.weights = weights
+        self.input_time = input_time
+        self.input_timer = 0
+        self.hold = None
+        self.held = False
+        self.depth = DEPTH
+        self.best_count = BEST_COUNT
+
     def place(self, mino, board):
         for y, row in enumerate(MINO_SHAPES[mino.type][str(mino.rotation)]):
             for x, dot in enumerate(row):
@@ -60,23 +68,36 @@ class Bot:
                 self.place(mino, board)
                 break
 
-    def find_moves(self, mino_type):
+    def find_moves(self, mino_0, mino_1, grid):
+        mino_types = [mino_0]
+        if mino_1:
+            mino_types.append(mino_1)
         moves = []
-        for r in [0, 1, 2, 3]:
-            for x in range(-2, self.board.w-2):
-                mino = Mino(mino_type, x, self.game.board.margin_top-4)
-                mino.rotation = r
-                board = TestBoard(self.board.grid)
+        for mino_type in mino_types:
+            for r in [0, 1, 2, 3]:
+                for x in range(-2, self.board.w-2):
+                    mino = Mino(mino_type, x, self.game.board.margin_top-4, r)
+                    board = TestBoard(grid)
 
-                if mino.check_collison(board):
-                    continue
-                self.hard_drop(mino, board)
-                score = self.get_score(board)
-
-                moves.append(Move(mino, score))
+                    if mino.check_collison(board):
+                        continue
+                    
+                    self.hard_drop(mino, board)
+                    score = self.get_score(board)
+                    self.line_clear(board)
+                    
+                    hold = None
+                    if mino_type != mino_0:
+                        hold = mino_0
+                    
+                    moves.append(Move(mino, score, board, hold))
         return moves
  
     def exectue_move(self, move):
+        if move.hold:
+            self.input(pygame.K_LSHIFT, 1)
+            self.hold = move.hold
+            
         if move.mino.rotation == 1:
             self.input(pygame.K_UP, 1)
         elif move.mino.rotation == 3:
@@ -96,17 +117,6 @@ class Bot:
                 self.input(pygame.K_LEFT, 1)
              
         self.input(pygame.K_SPACE, 1)
-
-    def get_height(self, board):
-        height = 0
-        for x in range(board.w):
-            height -= board.h
-            for y in range(board.h):
-                if board.grid[y][x] == " ":
-                    height += 1
-                else:
-                    break
-        return height
 
     def get_lines(self, board):
         count = 0
@@ -145,14 +155,32 @@ class Bot:
         return change_rate
 
     def get_score(self, board):
-        lines = self.get_lines(board)
-        change_rate = -self.get_change_rate(board)
-        holes = -self.get_holes(board)
-        # height = self.get_height(board)*0.02
-        # print(lines, change_rate, holes)
-        # return lines+change_rate+holes+height
+        lines = ATTACK_TABLE[self.get_lines(board)]*self.weights["line"]
+        change_rate = -self.get_change_rate(board)*self.weights["change_rate"]
+        holes = -self.get_holes(board)*self.weights["holes"]
         return lines+change_rate+holes
 
+    def research(self, depth, move):
+        mino_1 = None
+        if depth >= len(self.queue):
+            return 0
+        if depth+1 < len(self.queue):
+            mino_1 = self.queue[depth+1]
+        return self.search_moves(self.queue[depth], move.hold or mino_1, move.board.grid, depth).score 
+
+    def search_moves(self, mino_0, mino_1, grid, depth):
+        moves = self.find_moves(mino_0, mino_1, grid)
+        moves.sort(key=lambda x: x.score)
+        if depth >= self.depth:
+            if moves:
+                return moves[-1]
+            else:
+                return Move(Mino("O", 0, 0, 0), 0, [], False)
+        new_moves = sorted(moves[-self.best_count:], key=lambda x: self.research(depth+1, x))
+        if new_moves:
+            return new_moves[-1]
+        return Move(Mino("O", 0, 0, 0), 0, [], False)
+    
     def update(self, dt):
         if len(self.game.queue) == 11:
             bag = self.game.queue[-7:]
@@ -160,18 +188,15 @@ class Bot:
                 self.last_queue = bag
                 self.queue += bag
 
-        if self.queue:
-            # print(self.queue, self.game.queue)
-            mino_type = self.queue.pop(0)
-            # print(self.board)
-            moves = self.find_moves(mino_type)
-            moves.sort(key=lambda x: x.score)
-            if moves:
-                move = moves[-1]
-                self.exectue_move(move)
-                self.place(move.mino, self.board)
-                self.line_clear(self.board)
-                # print(move.mino.type)
+        if len(self.queue) >= 2:
+            move = self.search_moves(self.queue[0], self.hold or self.queue[1], self.board.grid, 0)
+            self.exectue_move(move)
+            self.place(move.mino, self.board)
+            self.line_clear(self.board)
+            if move.hold and not self.held:
+                self.held = True
+                self.queue.pop(0)
+            self.queue.pop(0)
 
         self.input_timer += dt
 
@@ -193,16 +218,16 @@ class Bot:
     def get_events(self, dt):
         events = []
 
-        # if self.input_timer > self.input_time:
-        #     self.input_timer = 0
-        if self.inputs:
-            current_input = self.inputs[0]
-            if current_input.down_event:
-                events.append(current_input.down_event)
-                current_input.down_event = None
-            
-            if current_input.hold_timer > current_input.hold_time:
-                events.append(current_input.up_event)
-                self.inputs.pop(0)
+        if self.input_timer > self.input_time:
+            self.input_timer = 0
+            if self.inputs:
+                current_input = self.inputs[0]
+                if current_input.down_event:
+                    events.append(current_input.down_event)
+                    current_input.down_event = None
+                
+                if current_input.hold_timer > current_input.hold_time:
+                    events.append(current_input.up_event)
+                    self.inputs.pop(0)
 
         return events
