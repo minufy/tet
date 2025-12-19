@@ -140,7 +140,7 @@ while True:
             sys.exit()
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_r:
-                game = Game()
+                game = Game(time.time()*1000)
             game.keydown(event.key)
         if event.type == pygame.KEYUP:
             game.keyup(event.key)
