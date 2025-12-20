@@ -30,10 +30,12 @@ class Handler:
         self.soft_drop_sdf_timer = 0
 
     def up_right(self):
-        self.held.remove("right")
+        if "right" in self.held:
+            self.held.remove("right")
 
     def up_left(self):
-        self.held.remove("left")
+        if "left" in self.held:
+            self.held.remove("left")
 
     def up_soft_drop(self):
         self.soft_drop_held = False

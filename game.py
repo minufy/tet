@@ -8,10 +8,14 @@ from utils import *
 
 class Game:
     def __init__(self, seed):
-        self.board = Board(10, 40, 20)
         if seed == -1:
             seed = time.time()*10000
         self.rng = RNG(seed)
+        self.restart()
+
+    def restart(self):
+        self.rng = RNG(0)
+        self.board = Board(10, 40, 20)
         self.queue = []
         self.next()
         self.handler = Handler(DAS, ARR, SDF)

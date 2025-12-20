@@ -2,6 +2,14 @@ import pygame
 from minos import *
 from utils import *
 
+LINE_TABLE = {
+    0: 0,
+    1: 0,
+    2: 1,
+    3: 2,
+    4: 10
+}
+
 def keydown(key):
     return pygame.event.Event(pygame.KEYDOWN, {
         "key": key
@@ -42,19 +50,38 @@ class Input:
         self.hold_timer += dt
  
 class Bot:
-    def __init__(self, game, input_time, weights):
+    def __init__(self, game, input_time):
         self.game = game
         self.board = TestBoard(self.game.board.grid)
         self.queue = [self.game.mino.type]+self.game.queue.copy()
         self.last_queue = []
         self.inputs = []
-        self.weights = weights
+        self.weights = {
+            "line": 0,
+            "change_rate": 0,
+            "holes": 0,
+            "well_depth": 0,
+        }
         self.input_time = input_time
         self.input_timer = 0
-        self.hold = None
+        self.hold_type = None
         self.held = False
         self.depth = DEPTH
         self.best_count = BEST_COUNT
+
+    def restart(self):
+        self.board = TestBoard(self.game.board.grid)
+        self.queue = [self.game.mino.type]+self.game.queue.copy()
+        self.last_queue = []
+        self.inputs = []
+        self.input_timer = 0
+        self.hold_type = None
+        self.held = False
+        self.depth = DEPTH
+        self.best_count = BEST_COUNT
+
+    def set_weights(self, weights):
+        self.weights = weights
 
     def place(self, mino, board):
         for y, row in enumerate(MINO_SHAPES[mino.type][str(mino.rotation)]):
@@ -96,7 +123,7 @@ class Bot:
     def exectue_move(self, move):
         if move.hold:
             self.input(pygame.K_LSHIFT, 1)
-            self.hold = move.hold
+            self.hold_type = move.hold
             
         if move.mino.rotation == 1:
             self.input(pygame.K_UP, 1)
@@ -117,6 +144,32 @@ class Bot:
                 self.input(pygame.K_LEFT, 1)
              
         self.input(pygame.K_SPACE, 1)
+
+    def get_heights(self, board):
+        heights = [0]*board.w
+        for x in range(board.w):
+            heights[x] = board.h
+            for y in range(board.h):
+                if board.grid[y][x] == " ":
+                    heights[x] -= 1
+                else:
+                    break
+        return heights
+                
+    def get_well_depth(self, board):
+        heights = self.get_heights(board)
+        well_depth = 0
+        for x in range(board.w):
+            left = -1 if x == 0 else heights[x-1]
+            right = -1 if x == board.w-1 else heights[x+1]
+            if left == -1: left = right
+            if right == -1: right = left
+            h = heights[x]
+            depth = left-h+right-h
+            if depth < 8:
+                continue
+            well_depth = max(well_depth, depth)
+        return well_depth
 
     def get_lines(self, board):
         count = 0
@@ -141,13 +194,7 @@ class Bot:
         return holes
 
     def get_change_rate(self, board):
-        heights = [0]*board.w
-        for x in range(board.w):
-            for y in range(board.h):
-                if board.grid[y][x] == " ":
-                    heights[x] += 1
-                else:
-                    break
+        heights = self.get_heights(board)
         diffs = []
         for i in range(board.w-1):
             diffs.append(abs(heights[i]-heights[i+1]))
@@ -155,10 +202,11 @@ class Bot:
         return change_rate
 
     def get_score(self, board):
-        lines = ATTACK_TABLE[self.get_lines(board)]*self.weights["line"]
+        lines = LINE_TABLE[self.get_lines(board)]*self.weights["line"]
         change_rate = self.get_change_rate(board)*self.weights["change_rate"]
         holes = self.get_holes(board)*self.weights["holes"]
-        return lines+change_rate+holes
+        well_depth = self.get_well_depth(board)*self.weights["well_depth"]
+        return lines+change_rate+holes+well_depth
 
     def research(self, depth, move):
         mino_1 = None
@@ -166,10 +214,10 @@ class Bot:
             return 0
         if depth+1 < len(self.queue):
             mino_1 = self.queue[depth+1]
-        return self.search_moves(self.queue[depth], move.hold or mino_1, move.board.grid, depth).score 
+        return self.search_moves(self.queue[depth], move.hold or mino_1, move.board, depth).score 
 
-    def search_moves(self, mino_0, mino_1, grid, depth):
-        moves = self.find_moves(mino_0, mino_1, grid)
+    def search_moves(self, mino_0, mino_1, board, depth):
+        moves = self.find_moves(mino_0, mino_1, board.grid)
         moves.sort(key=lambda x: x.score)
         if depth >= self.depth:
             if moves:
@@ -189,7 +237,7 @@ class Bot:
                 self.queue += bag
 
         if len(self.queue) >= 2:
-            move = self.search_moves(self.queue[0], self.hold or self.queue[1], self.board.grid, 0)
+            move = self.search_moves(self.queue[0], self.hold_type or self.queue[1], self.board, 0)
             self.exectue_move(move)
             self.place(move.mino, self.board)
             self.line_clear(self.board)
@@ -215,7 +263,7 @@ class Bot:
     def input(self, key, time):
         self.inputs.append(Input(key, time))
 
-    def get_events(self, dt):
+    def get_events(self):
         events = []
 
         if self.input_timer > self.input_time:
@@ -231,3 +279,8 @@ class Bot:
                     self.inputs.pop(0)
 
         return events
+    
+    def draw(self, screen):
+        for i, weight in enumerate(self.weights):
+            text = render_text(f"{weight}: {self.weights[weight]}", "#ffffff")
+            screen.blit(text, (10, 10+font.get_height()*i))

@@ -1,3 +1,5 @@
+import pygame
+
 SCREEN_W = 1280
 SCREEN_H = 720
 
@@ -15,5 +17,11 @@ ATTACK_TABLE = {
     4: 4
 }
 
-DEPTH = 0
-BEST_COUNT = 0
+DEPTH = 1
+BEST_COUNT = 1
+
+font = pygame.font.Font("Pretendard-Regular.ttf", 30)
+
+def render_text(text, color):
+    surface = font.render(text, True, color)
+    return surface
