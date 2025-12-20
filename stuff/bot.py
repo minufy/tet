@@ -86,7 +86,7 @@ class Bot:
         self.best_count = BEST_COUNT
 
     def get_mode(self, board):
-        if sum(self.get_heights(board))/board.w < DANGER_ZONE:
+        if sum(self.get_heights(board))/board.w < DANGER_HEIGHT:
             return "upstack"
         return "downstack"
 
@@ -307,50 +307,3 @@ class Bot:
                 self.inputs.pop(0)
 
         return events
-    
-    def draw(self, screen):
-        x = 15
-        y = 20
-        gap = 20
-
-        weights_text = render_text(font_bold, "WEIGHTS", MINO_COLORS["O"])
-        screen.blit(weights_text, (x, y))
-        y += font_bold.get_height()
-
-        weights = self.get_weights(self.game.board)
-        for i, weight in enumerate(weights):
-            text = render_text(font, f"{weight}: {weights[weight]}")
-            screen.blit(text, (x, y))
-            y += font.get_height()
-
-        y += gap
-
-        search_text = render_text(font_bold, "SEARCH", MINO_COLORS["I"])
-        screen.blit(search_text, (x, y))
-        y += font_bold.get_height()
-
-        depth_text = render_text(font, f"depth: {DEPTH}")
-        screen.blit(depth_text, (x, y))
-        y += font.get_height()
-        
-        best_count_text = render_text(font, f"best_count: {BEST_COUNT}")
-        screen.blit(best_count_text, (x, y))
-        y += font.get_height()
-
-        y += gap
-
-        state_text = render_text(font_bold, "STATE", MINO_COLORS["Z"])
-        screen.blit(state_text, (x, y))
-        y += font_bold.get_height()
-
-        attack_text = render_text(font, f"attack: {self.game.attack}")
-        screen.blit(attack_text, (x, y))
-        y += font.get_height()
-        
-        mode_text = render_text(font, f"mode: {self.get_mode(self.game.board)}")
-        screen.blit(mode_text, (x, y))
-        y += font.get_height()
-
-        avg_height_text = render_text(font, f"avg_height: {sum(self.get_heights(self.game.board))/self.game.board.w}")
-        screen.blit(avg_height_text, (x, y))
-        y += font.get_height()

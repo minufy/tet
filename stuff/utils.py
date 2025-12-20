@@ -1,5 +1,3 @@
-import pygame
-
 SCREEN_W = 1280
 SCREEN_H = 720
 
@@ -20,13 +18,6 @@ ATTACK_TABLE = {
 DEPTH = 2
 BEST_COUNT = 1
 
-DANGER_ZONE = 8
-
-font = pygame.font.Font("fonts/Pretendard-Regular.ttf", 20)
-font_bold = pygame.font.Font("fonts/Pretendard-Bold.ttf", 30)
-
-def render_text(font, text, color="#ffffff"):
-    surface = font.render(text, True, color)
-    return surface
+DANGER_HEIGHT = 4.5
 
 WEIGHTS = []

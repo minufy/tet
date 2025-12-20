@@ -1,11 +1,10 @@
+import multiprocessing as mp
 import pygame
-pygame.init()
-
 import random
-from tqdm import tqdm
 from stuff.bot import Bot
 from stuff.game import Game
 from stuff.utils import *
+# from stuff.result import up, down
 
 class Test:
     def __init__(self, game, bot, game_time, prev_weights_upstack=None, prev_weights_downstack=None):
@@ -77,46 +76,59 @@ class Result:
         self.weights_upstack = weights_upstack
         self.weights_downstack = weights_downstack
 
-RATE = 0.1
-LEARN_DEPTH = 5
-LEARN_COUNT = 10
-TEST_DURATION = 1000
+RATE = 0.4
+TEST_DEPTH = 15
+TEST_COUNT = 5
+TEST_DURATION = 500
+
+def run_game(bot, game):
+    for _ in range(TEST_DURATION):
+        for event in bot.get_events():
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_r:
+                    game.restart()
+                    bot.restart()
+                game.keydown(event.key)
+            if event.type == pygame.KEYUP:
+                game.keyup(event.key)
+
+        game.update(1)
+        bot.update(1)
+        # test.u pdate(1)
+
+def run_test(args):
+    i, prev_result = args
+    game = Game()
+    bot = Bot(game, 1)
+    test = Test(game, bot, TEST_DURATION, prev_result.weights_upstack, prev_result.weights_downstack)
+    
+    run_game(bot, game)
+    # score = game.attack
+    score = game.attack+bot.get_score(game.board)
+    print(f"{i+1}/{TEST_COUNT}")
+    print(f"score: {score}")
+    return Result(score, test.weights_upstack, test.weights_downstack)
 
 def run(prev_result, depth=0):
     print(f"depth: {depth}")
-    if depth > LEARN_DEPTH:
+    if depth > TEST_DEPTH:
         return prev_result
     
     results = [prev_result]
-    for _ in tqdm(range(LEARN_COUNT)):
-        game = Game()
-        bot = Bot(game, 1)
-        test = Test(game, bot, TEST_DURATION, prev_result.weights_upstack, prev_result.weights_downstack)
-
-        for _ in range(TEST_DURATION):
-            for event in bot.get_events():
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_r:
-                        game.restart()
-                        bot.restart()
-                    game.keydown(event.key)
-                if event.type == pygame.KEYUP:
-                    game.keyup(event.key)
-
-            game.update(1)
-            bot.update(1)
-            # test.update(1)
-
-        score = game.attack
-        print(f"\nscore: {score}")
-        results.append(Result(score, test.weights_upstack, test.weights_downstack))
+    args = [(i, prev_result) for i in range(TEST_COUNT)]
+    with mp.Pool(processes=3) as pool:
+        new_results = pool.map(run_test, args)
+    results += new_results
         
     results.sort(key=lambda x: x.score)
     return run(results[-1], depth+1)
 
-result = run(Result(0, None, None))
-with open("result.py", "a") as file:
-    file.writelines("\n")
-    file.writelines(f"# score: {result.score}\n")
-    file.writelines(f"up = {result.weights_upstack}\n")
-    file.writelines(f"down = {result.weights_downstack}\n")
+if __name__ == "__main__":
+    mp.freeze_support()
+    
+    result = run(Result(0, None, None))
+    with open("stuff/result.py", "a") as file:
+        file.writelines("\n")
+        file.writelines(f"# score: {result.score}\n")
+        file.writelines(f"up = {result.weights_upstack}\n")
+        file.writelines(f"down = {result.weights_downstack}\n")
