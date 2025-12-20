@@ -1,20 +1,20 @@
 import pygame
-from minos import *
-from utils import *
+from stuff.minos import *
+from stuff.utils import *
 
 LINE_TABLE = {
     "downstack": {
         0: 0,
-        1: 2,
-        2: 4,
-        3: 6,
+        1: 1,
+        2: 2,
+        3: 3,
         4: 10
     },
     "upstack": {
         0: 0,
-        1: -5,
-        2: -3,
-        3: -3,
+        1: -3,
+        2: -2,
+        3: -1,
         4: 10
     }
 }
@@ -86,7 +86,7 @@ class Bot:
         self.best_count = BEST_COUNT
 
     def get_mode(self, board):
-        if max(self.get_heights(board)) < DANGER_ZONE:
+        if sum(self.get_heights(board))/board.w < DANGER_ZONE:
             return "upstack"
         return "downstack"
 
@@ -220,11 +220,18 @@ class Bot:
 
     def get_score(self, board):
         weights = self.get_weights(board)
-        lines = LINE_TABLE[self.get_mode(board)][self.get_lines(board)]*weights["lines"]
-        change_rate = self.get_change_rate(board)*weights["change_rate"]
-        holes = self.get_holes(board)*weights["holes"]
-        avg_height = sum(self.get_heights(board))/board.w*weights["avg_height"]
-        well_depth = self.get_well_depth(board)*weights["well_depth"]
+        lines = LINE_TABLE[self.get_mode(board)][self.get_lines(board)]
+        change_rate = self.get_change_rate(board)
+        holes = self.get_holes(board)
+        avg_height = sum(self.get_heights(board))/board.w
+        well_depth = self.get_well_depth(board)
+
+        lines *= weights["lines"]
+        change_rate *= weights["change_rate"]
+        holes *= weights["holes"]
+        avg_height *= weights["avg_height"]
+        well_depth *= weights["well_depth"]
+
         return lines+change_rate+holes+avg_height+well_depth
 
     def research(self, depth, move):
@@ -259,7 +266,7 @@ class Bot:
         self.think_timer += dt
         if self.think_timer >= self.think_time:
             self.think_timer = 0
-            if len(self.queue) >= DEPTH:
+            if len(self.queue) >= max(DEPTH, 2):
                 moves = self.search_moves(self.queue[0], self.hold_type or self.queue[1], self.board, 0)
                 if moves:
                     move = moves[-1]
@@ -344,6 +351,6 @@ class Bot:
         screen.blit(mode_text, (x, y))
         y += font.get_height()
 
-        max_height_text = render_text(font, f"max_height: {max (self.get_heights(self.game.board))}")
-        screen.blit(max_height_text, (x, y))
+        avg_height_text = render_text(font, f"avg_height: {sum(self.get_heights(self.game.board))/self.game.board.w}")
+        screen.blit(avg_height_text, (x, y))
         y += font.get_height()

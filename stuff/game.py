@@ -1,22 +1,20 @@
 import pygame
 import time
-from board import Board
-from handler import Handler
-from rng import RNG
-from minos import *
-from utils import *
+from stuff.board import Board
+from stuff.handler import Handler
+from stuff.rng import RNG
+from stuff.minos import *
+from stuff.utils import *
 
 class Game:
     def __init__(self, seed=None):
-        self.seed = round(time.time()*1000)
+        self.seed = round(time.time()*10000)
         if seed:
             self.seed = seed
         self.rng = RNG(self.seed)
         self.restart()
 
     def restart(self):
-        # self.seed = round(time.time()*1000)
-        self.rng = RNG(self.seed)
         self.board = Board(10, 40, 20)
         self.queue = []
         self.next()

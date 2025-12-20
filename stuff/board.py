@@ -1,6 +1,6 @@
 import pygame
-from minos import *
-from utils import *
+from stuff.minos import *
+from stuff.utils import *
 
 class Board:
     def __init__(self, w, h, margin_top):

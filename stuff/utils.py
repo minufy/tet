@@ -17,13 +17,13 @@ ATTACK_TABLE = {
     4: 4
 }
 
-DEPTH = 1
-BEST_COUNT = 5
+DEPTH = 2
+BEST_COUNT = 1
 
 DANGER_ZONE = 8
 
-font = pygame.font.Font("Pretendard-Regular.ttf", 20)
-font_bold = pygame.font.Font("Pretendard-Bold.ttf", 30)
+font = pygame.font.Font("fonts/Pretendard-Regular.ttf", 20)
+font_bold = pygame.font.Font("fonts/Pretendard-Bold.ttf", 30)
 
 def render_text(font, text, color="#ffffff"):
     surface = font.render(text, True, color)
