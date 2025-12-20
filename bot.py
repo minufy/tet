@@ -3,11 +3,20 @@ from minos import *
 from utils import *
 
 LINE_TABLE = {
-    0: 0,
-    1: 1,
-    2: 2,
-    3: 4,
-    4: 10
+    "downstack": {
+        0: 0,
+        1: 2,
+        2: 4,
+        3: 6,
+        4: 10
+    },
+    "upstack": {
+        0: 0,
+        1: -5,
+        2: -3,
+        3: -3,
+        4: 10
+    }
 }
 
 def keydown(key):
@@ -76,8 +85,14 @@ class Bot:
         self.depth = DEPTH
         self.best_count = BEST_COUNT
 
-    def get_weights(self, board):
+    def get_mode(self, board):
         if max(self.get_heights(board)) < DANGER_ZONE:
+            return "upstack"
+        return "downstack"
+
+    def get_weights(self, board):
+        mode = self.get_mode(board)
+        if mode == "upstack":
             return self.weights_upstack
         return self.weights_downstack
 
@@ -205,7 +220,7 @@ class Bot:
 
     def get_score(self, board):
         weights = self.get_weights(board)
-        lines = LINE_TABLE[self.get_lines(board)]*weights["line"]
+        lines = LINE_TABLE[self.get_mode(board)][self.get_lines(board)]*weights["lines"]
         change_rate = self.get_change_rate(board)*weights["change_rate"]
         holes = self.get_holes(board)*weights["holes"]
         avg_height = sum(self.get_heights(board))/board.w*weights["avg_height"]
@@ -287,15 +302,48 @@ class Bot:
         return events
     
     def draw(self, screen):
+        x = 15
+        y = 20
+        gap = 20
+
+        weights_text = render_text(font_bold, "WEIGHTS", MINO_COLORS["O"])
+        screen.blit(weights_text, (x, y))
+        y += font_bold.get_height()
+
         weights = self.get_weights(self.game.board)
         for i, weight in enumerate(weights):
-            text = render_text(f"{weight}: {weights[weight]}", "#ffffff")
-            screen.blit(text, (10, 10+font.get_height()*i))
+            text = render_text(font, f"{weight}: {weights[weight]}")
+            screen.blit(text, (x, y))
+            y += font.get_height()
 
-        depth_text = render_text(f"depth: {DEPTH}", MINO_COLORS["I"])
-        screen.blit(depth_text, (10, 10+font.get_height()*6))
-        best_count_text = render_text(f"best_count: {BEST_COUNT}", MINO_COLORS["I"])
-        screen.blit(best_count_text, (10, 10+font.get_height()*7))
+        y += gap
 
-        attack_text = render_text(f"attack: {self.game.attack}", MINO_COLORS["Z"])
-        screen.blit(attack_text, (10, 10+font.get_height()*9))
+        search_text = render_text(font_bold, "SEARCH", MINO_COLORS["I"])
+        screen.blit(search_text, (x, y))
+        y += font_bold.get_height()
+
+        depth_text = render_text(font, f"depth: {DEPTH}")
+        screen.blit(depth_text, (x, y))
+        y += font.get_height()
+        
+        best_count_text = render_text(font, f"best_count: {BEST_COUNT}")
+        screen.blit(best_count_text, (x, y))
+        y += font.get_height()
+
+        y += gap
+
+        state_text = render_text(font_bold, "STATE", MINO_COLORS["Z"])
+        screen.blit(state_text, (x, y))
+        y += font_bold.get_height()
+
+        attack_text = render_text(font, f"attack: {self.game.attack}")
+        screen.blit(attack_text, (x, y))
+        y += font.get_height()
+        
+        mode_text = render_text(font, f"mode: {self.get_mode(self.game.board)}")
+        screen.blit(mode_text, (x, y))
+        y += font.get_height()
+
+        max_height_text = render_text(font, f"max_height: {max (self.get_heights(self.game.board))}")
+        screen.blit(max_height_text, (x, y))
+        y += font.get_height()

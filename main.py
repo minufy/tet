@@ -33,15 +33,16 @@ class Test:
         self.game_timer = 0
         change_rate = -random.randint(50, 1000)/750
         holes = -random.randint(50, 1000)/750
+        lines = random.randint(0, 500)/1000
         self.weights_upstack = {
-            "line": -random.randint(0, 500)/1000,
+            "lines": lines,
             "change_rate": change_rate,
             "holes": holes,
             "avg_height": 0,
             "well_depth": random.randint(0, 40)/1000,
         }
         self.weights_downstack = {
-            "line": random.randint(0, 1000)/1000,
+            "lines": lines*2,
             "change_rate": change_rate,
             "holes": holes,
             "avg_height": -random.randint(0, 1000)/1000,
@@ -61,10 +62,10 @@ class Test:
                 self.restart()
             
 game = Game()
-bot = Bot(game, 1)
+bot = Bot(game, 100)
 test = Test(game, bot, 10000)
-# test.active = True
-bot.set_weights(*WEIGHTS[1])
+test.active = True
+# bot.set_weights(*WEIGHTS[2])
  
 while True: 
     screen.fill("#333333")
