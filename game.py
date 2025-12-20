@@ -14,7 +14,6 @@ class Game:
         self.restart()
 
     def restart(self):
-        self.rng = RNG(0)
         self.board = Board(10, 40, 20)
         self.queue = []
         self.next()

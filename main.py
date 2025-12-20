@@ -16,7 +16,7 @@ class Test:
         self.game = game
         self.bot = bot
         self.game_time = game_time
-        self.active = True
+        self.active = False
         self.restart()
 
     def draw(self, screen):
@@ -33,27 +33,36 @@ class Test:
 
     def restart(self):
         self.game_timer = 0
-        self.weights = {
-            "line": random.randint(0, 100)/100,
-            "change_rate": -random.randint(5, 100)/50,
-            "holes": -random.randint(5, 100)/50,
+        change_rate = -random.randint(5, 100)/50
+        holes = -random.randint(5, 100)/50
+        self.weights_upstack = {
+            "line": -random.randint(0, 50)/100,
+            "change_rate": change_rate,
+            "holes": holes,
             "well_depth": random.randint(0, 4)/100,
         }
-        self.bot.set_weights(self.weights)
+        self.weights_downstack = {
+            "line": random.randint(0, 150)/100,
+            "change_rate": change_rate,
+            "holes": holes,
+            "well_depth": -random.randint(0, 4)/100,
+        }
+        self.bot.set_weights(self.weights_upstack, self.weights_downstack)
         
     def update(self, dt):
         if self.active:
             self.game_timer += dt
             if self.game_timer > self.game_time:
-                print(game.attack, self.weights)
+                print(game.attack, f"{self.weights_upstack}, {self.weights_downstack}")
                 self.game.restart()
                 self.bot.restart()
                 self.restart()
             
 game = Game(-1)
-bot = Bot(game, 10)
-test = Test(game, bot)
-test.active = False
+bot = Bot(game, 1)
+test = Test(game, bot) 
+test.active = True
+# bot.set_weights({'line': -0.34, 'change_rate': -0.42, 'holes': -1.26, 'well_depth': 0.03}, {'line': 0.3, 'change_rate': -0.48, 'holes': -1.26, 'well_depth': -0.01})
  
 while True:
     screen.fill("#333333")
@@ -64,7 +73,8 @@ while True:
             sys.exit()
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_r:
-                game = Game(-1)
+                game.restart()
+                bot.restart()
             game.keydown(event.key)
         if event.type == pygame.KEYUP:
             game.keyup(event.key)

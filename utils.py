@@ -17,8 +17,10 @@ ATTACK_TABLE = {
     4: 4
 }
 
-DEPTH = 1
+DEPTH = 2
 BEST_COUNT = 1
+
+DANGER_ZONE = 8
 
 font = pygame.font.Font("Pretendard-Regular.ttf", 30)
 

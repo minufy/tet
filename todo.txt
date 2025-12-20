@@ -2,3 +2,9 @@ death
 -- ai 관련 --
 올스핀
 das 차징
+
+28 {'line': -0.26, 'change_rate': -0.76, 'holes': -0.3, 'well_depth': 0.02}, {'line': 0.43, 'change_rate': -0.86, 'holes': -1.08, 'well_depth': 0.04}
+20 {'line': -0.41, 'change_rate': -0.62, 'holes': -0.86, 'well_depth': 0.0}, {'line': 0.03, 'change_rate': -1.64, 'holes': -1.38, 'well_depth': 0.03}
+24 {'line': -0.34, 'change_rate': -0.42, 'holes': -1.26, 'well_depth': 0.03}, {'line': 0.76, 'change_rate': -1.66, 'holes': -0.52, 'well_depth': 0.03}
+25 {'line': -0.46, 'change_rate': -0.36, 'holes': -1.3, 'well_depth': 0.03}, {'line': 0.63, 'change_rate': -1.5, 'holes': -1.78, 'well_depth': 0.03}
+25 {'line': -0.07, 'change_rate': -0.46, 'holes': -0.66, 'well_depth': 0.03}, {'line': 1.5, 'change_rate': -0.4, 'holes': -1.94, 'well_depth': 0.01}

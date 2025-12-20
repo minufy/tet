@@ -4,9 +4,9 @@ from utils import *
 
 LINE_TABLE = {
     0: 0,
-    1: 0,
-    2: 1,
-    3: 2,
+    1: 1,
+    2: 2,
+    3: 4,
     4: 10
 }
 
@@ -56,12 +56,8 @@ class Bot:
         self.queue = [self.game.mino.type]+self.game.queue.copy()
         self.last_queue = []
         self.inputs = []
-        self.weights = {
-            "line": 0,
-            "change_rate": 0,
-            "holes": 0,
-            "well_depth": 0,
-        }
+        self.weights_upstack = {}
+        self.weights_downstack = {}
         self.input_time = input_time
         self.input_timer = 0
         self.hold_type = None
@@ -80,8 +76,14 @@ class Bot:
         self.depth = DEPTH
         self.best_count = BEST_COUNT
 
-    def set_weights(self, weights):
-        self.weights = weights
+    def get_weights(self, board):
+        if max(self.get_heights(board)) < DANGER_ZONE:
+            return self.weights_upstack
+        return self.weights_downstack
+
+    def set_weights(self, weights_upstack, weights_donwstack):
+        self.weights_upstack = weights_upstack
+        self.weights_downstack = weights_donwstack
 
     def place(self, mino, board):
         for y, row in enumerate(MINO_SHAPES[mino.type][str(mino.rotation)]):
@@ -202,10 +204,11 @@ class Bot:
         return change_rate
 
     def get_score(self, board):
-        lines = LINE_TABLE[self.get_lines(board)]*self.weights["line"]
-        change_rate = self.get_change_rate(board)*self.weights["change_rate"]
-        holes = self.get_holes(board)*self.weights["holes"]
-        well_depth = self.get_well_depth(board)*self.weights["well_depth"]
+        weights = self.get_weights(board)
+        lines = LINE_TABLE[self.get_lines(board)]*weights["line"]
+        change_rate = self.get_change_rate(board)*weights["change_rate"]
+        holes = self.get_holes(board)*weights["holes"]
+        well_depth = self.get_well_depth(board)*weights["well_depth"]
         return lines+change_rate+holes+well_depth
 
     def research(self, depth, move):
@@ -281,6 +284,7 @@ class Bot:
         return events
     
     def draw(self, screen):
-        for i, weight in enumerate(self.weights):
-            text = render_text(f"{weight}: {self.weights[weight]}", "#ffffff")
+        weights = self.get_weights(self.game.board)
+        for i, weight in enumerate(weights):
+            text = render_text(f"{weight}: {weights[weight]}", "#ffffff")
             screen.blit(text, (10, 10+font.get_height()*i))
