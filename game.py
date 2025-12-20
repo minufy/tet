@@ -7,13 +7,16 @@ from minos import *
 from utils import *
 
 class Game:
-    def __init__(self, seed):
-        if seed == -1:
-            seed = time.time()*10000
-        self.rng = RNG(seed)
+    def __init__(self, seed=None):
+        self.seed = round(time.time()*1000)
+        if seed:
+            self.seed = seed
+        self.rng = RNG(self.seed)
         self.restart()
 
     def restart(self):
+        # self.seed = round(time.time()*1000)
+        self.rng = RNG(self.seed)
         self.board = Board(10, 40, 20)
         self.queue = []
         self.next()

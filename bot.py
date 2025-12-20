@@ -50,7 +50,7 @@ class Input:
         self.hold_timer += dt
  
 class Bot:
-    def __init__(self, game, input_time):
+    def __init__(self, game, think_time):
         self.game = game
         self.board = TestBoard(self.game.board.grid)
         self.queue = [self.game.mino.type]+self.game.queue.copy()
@@ -58,8 +58,8 @@ class Bot:
         self.inputs = []
         self.weights_upstack = {}
         self.weights_downstack = {}
-        self.input_time = input_time
-        self.input_timer = 0
+        self.think_time = think_time
+        self.think_timer = 0
         self.hold_type = None
         self.held = False
         self.depth = DEPTH
@@ -70,7 +70,7 @@ class Bot:
         self.queue = [self.game.mino.type]+self.game.queue.copy()
         self.last_queue = []
         self.inputs = []
-        self.input_timer = 0
+        self.think_timer = 0
         self.hold_type = None
         self.held = False
         self.depth = DEPTH
@@ -104,7 +104,7 @@ class Bot:
         moves = []
         for mino_type in mino_types:
             for r in [0, 1, 2, 3]:
-                for x in range(-2, self.board.w-2):
+                for x in range(-2, self.board.w-1):
                     mino = Mino(mino_type, x, self.game.board.margin_top-4, r)
                     board = TestBoard(grid)
 
@@ -208,29 +208,31 @@ class Bot:
         lines = LINE_TABLE[self.get_lines(board)]*weights["line"]
         change_rate = self.get_change_rate(board)*weights["change_rate"]
         holes = self.get_holes(board)*weights["holes"]
+        avg_height = sum(self.get_heights(board))/board.w*weights["avg_height"]
         well_depth = self.get_well_depth(board)*weights["well_depth"]
-        return lines+change_rate+holes+well_depth
+        return lines+change_rate+holes+avg_height+well_depth
 
     def research(self, depth, move):
         mino_1 = None
         if depth >= len(self.queue):
-            return 0
+            return []
         if depth+1 < len(self.queue):
             mino_1 = self.queue[depth+1]
-        return self.search_moves(self.queue[depth], move.hold or mino_1, move.board, depth).score 
+        return self.search_moves(self.queue[depth], move.hold or mino_1, move.board, depth) 
 
     def search_moves(self, mino_0, mino_1, board, depth):
         moves = self.find_moves(mino_0, mino_1, board.grid)
         moves.sort(key=lambda x: x.score)
         if depth >= self.depth:
             if moves:
-                return moves[-1]
+                return moves
             else:
-                return Move(Mino("O", 0, 0, 0), 0, [], False)
-        new_moves = sorted(moves[-self.best_count:], key=lambda x: self.research(depth+1, x))
+                return []
+            
+        new_moves = sorted(moves[-self.best_count:], key=lambda x: sum([move.score for move in self.research(depth+1, x)]))
         if new_moves:
-            return new_moves[-1]
-        return Move(Mino("O", 0, 0, 0), 0, [], False)
+            return new_moves
+        return []
     
     def update(self, dt):
         if len(self.game.queue) == 11:
@@ -239,17 +241,20 @@ class Bot:
                 self.last_queue = bag
                 self.queue += bag
 
-        if len(self.queue) >= 2:
-            move = self.search_moves(self.queue[0], self.hold_type or self.queue[1], self.board, 0)
-            self.exectue_move(move)
-            self.place(move.mino, self.board)
-            self.line_clear(self.board)
-            if move.hold and not self.held:
-                self.held = True
-                self.queue.pop(0)
-            self.queue.pop(0)
-
-        self.input_timer += dt
+        self.think_timer += dt
+        if self.think_timer >= self.think_time:
+            self.think_timer = 0
+            if len(self.queue) >= DEPTH:
+                moves = self.search_moves(self.queue[0], self.hold_type or self.queue[1], self.board, 0)
+                if moves:
+                    move = moves[-1]
+                    self.exectue_move(move)
+                    self.place(move.mino, self.board)
+                    self.line_clear(self.board)
+                    if move.hold and not self.held:
+                        self.held = True
+                        self.queue.pop(0)
+                    self.queue.pop(0)
 
         if self.inputs:
             self.inputs[0].update(dt)
@@ -268,18 +273,16 @@ class Bot:
 
     def get_events(self):
         events = []
-
-        if self.input_timer > self.input_time:
-            self.input_timer = 0
-            if self.inputs:
-                current_input = self.inputs[0]
-                if current_input.down_event:
-                    events.append(current_input.down_event)
-                    current_input.down_event = None
-                
-                if current_input.hold_timer > current_input.hold_time:
-                    events.append(current_input.up_event)
-                    self.inputs.pop(0)
+        
+        if self.inputs:
+            current_input = self.inputs[0]
+            if current_input.down_event:
+                events.append(current_input.down_event)
+                current_input.down_event = None
+            
+            if current_input.hold_timer > current_input.hold_time:
+                events.append(current_input.up_event)
+                self.inputs.pop(0)
 
         return events
     
@@ -288,3 +291,11 @@ class Bot:
         for i, weight in enumerate(weights):
             text = render_text(f"{weight}: {weights[weight]}", "#ffffff")
             screen.blit(text, (10, 10+font.get_height()*i))
+
+        depth_text = render_text(f"depth: {DEPTH}", MINO_COLORS["I"])
+        screen.blit(depth_text, (10, 10+font.get_height()*6))
+        best_count_text = render_text(f"best_count: {BEST_COUNT}", MINO_COLORS["I"])
+        screen.blit(best_count_text, (10, 10+font.get_height()*7))
+
+        attack_text = render_text(f"attack: {self.game.attack}", MINO_COLORS["Z"])
+        screen.blit(attack_text, (10, 10+font.get_height()*9))
