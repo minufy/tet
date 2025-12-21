@@ -7,40 +7,23 @@ from stuff.utils import *
 # from stuff.result import up, down
 
 class Test:
-    def __init__(self, game, bot, game_time, prev_weights_upstack=None, prev_weights_downstack=None):
+    def __init__(self, game, bot, prev_weights_upstack=None, prev_weights_downstack=None):
         self.game = game
         self.bot = bot
-        self.game_time = game_time
-        self.active = False
         self.prev_weights_upstack = prev_weights_upstack
         self.prev_weights_downstack = prev_weights_downstack
         self.set()
 
-    def draw(self, screen):
-        if self.active:
-            pygame.draw.rect(screen, "#ffffff", (0, 0, self.game_timer/self.game_time*SCREEN_W, 5))
-
-    def restart(self):
-        print(self.game.seed, self.game.attack, f"{self.weights_upstack}, {self.weights_downstack}")
-        self.game.restart()
-        self.bot.restart()
-        self.set()
-
     def set(self):
-        self.game_timer = 0
         weights_upstack = {
             "lines": random.random(),
             "change_rate": -random.random(),
             "holes": -random.random(),
-            "avg_height": 0,
-            "well_depth_sum": -random.random(),
         }
         weights_downstack = {
             "lines": random.random(),
             "change_rate": -random.random(),
             "holes": -random.random(),
-            "avg_height": -random.random(),
-            "well_depth_sum": -random.random(),
         }
 
         if self.prev_weights_upstack:
@@ -63,12 +46,6 @@ class Test:
             self.weights_downstack[weight] = round(self.weights_downstack[weight], 3)
 
         self.bot.set_weights(self.weights_upstack, self.weights_downstack)
-        
-    def update(self, dt):
-        if self.active:
-            self.game_timer += dt
-            if self.game_timer > self.game_time:
-                self.restart()
             
 class Result:
     def __init__(self, score, weights_upstack, weights_downstack):
@@ -77,7 +54,7 @@ class Result:
         self.weights_downstack = weights_downstack
 
 RATE = 0.3
-TEST_DEPTH = 40
+TEST_DEPTH = 20
 TEST_COUNT = 3
 TEST_DURATION = 1500
 

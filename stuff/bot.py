@@ -5,9 +5,9 @@ from stuff.utils import *
 LINE_TABLE = {
     "upstack": {
         0: 0,
-        1: -3,
-        2: -2,
-        3: -1,
+        1: -4,
+        2: -3,
+        3: -2,
         4: 10
     },
     "downstack": {
@@ -175,28 +175,7 @@ class Bot:
                 else:
                     break
         return heights
-                
-    def get_well_depths(self, board):
-        heights = self.get_heights(board)
-        well_depths = []
-        for x in range(board.w):
-            left = -1 if x == 0 else heights[x-1]
-            right = -1 if x == board.w-1 else heights[x+1]
-            if left == -1: left = right
-            if right == -1: right = left
-            h = heights[x]
-            depth = 0
-            if left > h and right > h:
-                depth += left-h
-                depth += right-h
-            well_depths.append(depth/2)
-        return well_depths
-        
-    def get_well_depth_sum(self, board):
-        well_depths = self.get_well_depths(board)
-        well_depths.sort()
-        return sum(well_depths[:-1])
-
+    
     def get_lines(self, board):
         count = 0
         for y in range(board.h):
@@ -228,20 +207,16 @@ class Bot:
         return change_rate
 
     def get_scores(self, board):
-        weights = self.get_weights(board)
         lines = LINE_TABLE[self.get_mode(board)][self.get_lines(board)]
         change_rate = self.get_change_rate(board)
         holes = self.get_holes(board)
-        avg_height = sum(self.get_heights(board))/board.w
-        well_depth_sum = self.get_well_depth_sum(board)
 
+        weights = self.get_weights(board)
         lines *= weights["lines"]
         change_rate *= weights["change_rate"]
         holes *= weights["holes"]
-        avg_height *= weights["avg_height"]
-        well_depth_sum *= weights["well_depth_sum"]
 
-        return lines, change_rate, holes, avg_height, well_depth_sum
+        return lines, change_rate, holes
 
     def research(self, depth, move):
         mino_1 = None
@@ -290,7 +265,6 @@ class Bot:
             if self.think_timer >= self.think_time:
                 self.think_timer = 0
                 self.think()
-                
         elif self.inputs == []:
             self.sync()
 
