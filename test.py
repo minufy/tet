@@ -76,10 +76,10 @@ class Result:
         self.weights_upstack = weights_upstack
         self.weights_downstack = weights_downstack
 
-RATE = 0.2
-TEST_DEPTH = 3
-TEST_COUNT = 2
-TEST_DURATION = 2000
+RATE = 0.3
+TEST_DEPTH = 40
+TEST_COUNT = 3
+TEST_DURATION = 1500
 
 def run_game(bot, game):
     for _ in range(TEST_DURATION):

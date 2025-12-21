@@ -38,11 +38,11 @@ def draw_hud(screen, bot, game):
     screen.blit(search_text, (x, y))
     y += font_bold.get_height()
 
-    depth_text = render_text(font, f"depth: {DEPTH}")
+    depth_text = render_text(font, f"depth: {SEARCH_DEPTH}")
     screen.blit(depth_text, (x, y))
     y += font.get_height()
     
-    best_count_text = render_text(font, f"best_count: {BEST_COUNT}")
+    best_count_text = render_text(font, f"count: {SEARCH_COUNT}")
     screen.blit(best_count_text, (x, y))
     y += font.get_height()
 
@@ -60,8 +60,8 @@ def draw_hud(screen, bot, game):
     screen.blit(mode_text, (x, y))
     y += font.get_height()
 
-    avg_height_text = render_text(font, f"avg_height: {sum(bot.get_heights(game.board))/game.board.w}")
-    screen.blit(avg_height_text, (x, y))
+    max_height_text = render_text(font, f"max_height: {max(bot.get_heights(game.board))}")
+    screen.blit(max_height_text, (x, y))
     y += font.get_height()
 
 while True:

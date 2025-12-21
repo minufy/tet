@@ -3,6 +3,13 @@ from stuff.minos import *
 from stuff.utils import *
 
 LINE_TABLE = {
+    "upstack": {
+        0: 0,
+        1: -3,
+        2: -2,
+        3: -1,
+        4: 10
+    },
     "downstack": {
         0: 0,
         1: 1,
@@ -10,13 +17,6 @@ LINE_TABLE = {
         3: 3,
         4: 10
     },
-    "upstack": {
-        0: 0,
-        1: -3,
-        2: -2,
-        3: -1,
-        4: 10
-    }
 }
 
 def keydown(key):
@@ -71,8 +71,8 @@ class Bot:
         self.think_timer = 0
         self.hold_type = None
         self.held = False
-        self.depth = DEPTH
-        self.best_count = BEST_COUNT
+        self.depth = SEARCH_DEPTH
+        self.best_count = SEARCH_COUNT
 
     def sync(self):
         self.board = TestBoard(self.game.board.grid)
@@ -85,11 +85,11 @@ class Bot:
         self.think_timer = 0
         self.hold_type = None
         self.held = False
-        self.depth = DEPTH
-        self.best_count = BEST_COUNT
+        self.depth = SEARCH_DEPTH
+        self.best_count = SEARCH_COUNT
 
     def get_mode(self, board):
-        if sum(self.get_heights(board))/board.w < DANGER_HEIGHT:
+        if max(self.get_heights(board)) < DANGER_HEIGHT:
             return "upstack"
         return "downstack"
 
@@ -265,6 +265,19 @@ class Bot:
             return new_moves
         return []
     
+    def think(self):
+        if len(self.queue) >= max(SEARCH_DEPTH, 2):
+            moves = self.search_moves(self.queue[0], self.hold_type or self.queue[1], self.board, 0)
+            if moves:
+                move = moves[-1]
+                self.exectue_move(move)
+                self.place(move.mino, self.board)
+                self.line_clear(self.board)
+                if move.hold and not self.held:
+                    self.held = True
+                    self.queue.pop(0)
+                self.queue.pop(0)
+
     def update(self, dt):
         if len(self.game.queue) == 11:
             bag = self.game.queue[-7:]
@@ -276,17 +289,8 @@ class Bot:
             self.think_timer += dt
             if self.think_timer >= self.think_time:
                 self.think_timer = 0
-                if len(self.queue) >= max(DEPTH, 2):
-                    moves = self.search_moves(self.queue[0], self.hold_type or self.queue[1], self.board, 0)
-                    if moves:
-                        move = moves[-1]
-                        self.exectue_move(move)
-                        self.place(move.mino, self.board)
-                        self.line_clear(self.board)
-                        if move.hold and not self.held:
-                            self.held = True
-                            self.queue.pop(0)
-                        self.queue.pop(0)
+                self.think()
+                
         elif self.inputs == []:
             self.sync()
 
