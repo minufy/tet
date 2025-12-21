@@ -23,8 +23,7 @@ class Game:
         self.held = False
         self.attack = 0
 
-        self.send_garbage = 0
-        self.take_garbage = 0
+        self.garbage = 0
 
     def draw_mino(self, screen, pos, mx, my, mt, mr, color=None):
         if color == None:
@@ -53,19 +52,20 @@ class Game:
             self.draw_mino(screen, pos, 11+x, y+1+i*gap, mino_type, 0, MINO_COLORS[mino_type])
 
     def hard_drop(self):
-        self.board.add_garbage(self.take_garbage, round(self.rng.nextFloat()))
-        self.take_garbage = 0
         self.held = False
         for _ in range(self.board.h):
             if self.mino.move(0, 1, self.board) == False:
                 self.board.place(self.mino)
                 
                 attack = ATTACK_TABLE[self.board.line_clear()]
-                self.send_garbage += attack
+                self.garbage += attack
                 self.attack += attack
                 
                 self.next()
                 break
+        take_garbage = -min(self.garbage, 0)
+        self.board.add_garbage(take_garbage, round(self.rng.nextFloat()))
+        self.garbage += take_garbage
 
     def keydown(self, key):
         if key == pygame.K_RIGHT:
@@ -138,9 +138,9 @@ class Game:
         return Mino(self.queue.pop(0), 3, self.board.margin_top-4)
 
     def get_garbage(self):
-        garbage = self.send_garbage
-        self.send_garbage = 0
+        garbage = max(0, self.garbage)
+        self.garbage -= garbage
         return garbage
     
-    def set_garbage(self, amount):
-        self.take_garbage += amount
+    def add_garbage(self, amount):
+        self.garbage -= amount

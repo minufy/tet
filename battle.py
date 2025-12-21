@@ -49,8 +49,8 @@ while True:
     player_game.update(dt)
     bot_game.update(dt)
     
-    bot_game.set_garbage(player_game.get_garbage())
-    player_game.set_garbage(bot_game.get_garbage())
+    bot_game.add_garbage(player_game.get_garbage())
+    player_game.add_garbage(bot_game.get_garbage())
 
     bot.update(dt)
 
