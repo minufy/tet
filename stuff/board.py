@@ -3,10 +3,9 @@ from stuff.minos import *
 from stuff.utils import *
 
 class Board:
-    def __init__(self, w, h, margin_top):
+    def __init__(self, w, h):
         self.w = w
         self.h = h
-        self.margin_top = margin_top
         self.grid = [[" "]*w for _ in range(h)]
 
     def draw(self, screen, pos):
@@ -14,7 +13,7 @@ class Board:
             for x in range(self.w):
                 rect = (x*UNIT+pos[0], y*UNIT+pos[1], UNIT, UNIT)
                 if self.grid[y][x] == " ":
-                    if y >= self.margin_top:
+                    if y >= self.h//2:
                         pygame.draw.rect(screen, MINO_COLORS["X"], rect, 1)
                 else:
                     pygame.draw.rect(screen, MINO_COLORS[self.grid[y][x]], rect)

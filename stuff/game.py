@@ -14,8 +14,11 @@ class Game:
         self.rng = RNG(self.seed)
         self.restart()
 
-    def restart(self):
-        self.board = Board(10, 40, 20)
+    def restart(self, seed=None):
+        if seed:
+            self.seed = seed
+        self.rng = RNG(self.seed)
+        self.board = Board(10, 40)
         self.queue = []
         self.next()
         self.handler = Handler(DAS, ARR, SDF)
@@ -68,31 +71,31 @@ class Game:
         self.garbage += take_garbage
 
     def keydown(self, key):
-        if key == pygame.K_RIGHT:
+        if key == "right":
             self.handler.down_right()
             self.mino.move(1, 0, self.board)
-        if key == pygame.K_LEFT:
+        if key == "left":
             self.handler.down_left()
             self.mino.move(-1, 0, self.board)
-        if key == pygame.K_DOWN:
+        if key == "softdrop":
             self.handler.down_soft_drop()
-        if key == pygame.K_UP:
+        if key == "cw":
             self.mino.rotate(1, self.board)
-        if key == pygame.K_LCTRL:
+        if key == "ccw":
             self.mino.rotate(-1, self.board)
-        if key == pygame.K_a:
+        if key == "180":
             self.mino.rotate(2, self.board)
-        if key == pygame.K_SPACE:
+        if key == "harddrop":
             self.hard_drop()
-        if key == pygame.K_LSHIFT:
+        if key == "hold":
             self.hold()
 
     def keyup(self, key):
-        if key == pygame.K_RIGHT:
+        if key == "right":
             self.handler.up_right()
-        if key == pygame.K_LEFT:
+        if key == "left":
             self.handler.up_left()
-        if key == pygame.K_DOWN:
+        if key == "softdrop":
             self.handler.up_soft_drop()
 
     def hold(self):
@@ -102,7 +105,7 @@ class Game:
         if self.hold_type == None:
             self.next()
         else:
-            self.mino = Mino(self.hold_type, 3, self.board.margin_top-4)
+            self.mino = Mino(self.hold_type, 3, self.board.h//2-4)
         self.hold_type = old_type
         self.held = True
 
@@ -120,7 +123,7 @@ class Game:
 
     def draw(self, screen, offset=(0, 0)):
         pos = (SCREEN_W/2-UNIT*10/2+offset[0], SCREEN_H/2-UNIT*20/2+offset[1])
-        pos_margin = (pos[0], pos[1]-self.board.margin_top*UNIT)
+        pos_margin = (pos[0], pos[1]-self.board.h//2*UNIT)
         self.board.draw(screen, pos_margin)
         self.draw_shadow(screen, pos_margin)
         self.draw_mino(screen, pos_margin, self.mino.x, self.mino.y, self.mino.type, self.mino.rotation)
@@ -135,7 +138,7 @@ class Game:
         self.queue += self.rng.shuffleArray(MINO_TYPES.copy())
 
     def pop_queue(self):
-        return Mino(self.queue.pop(0), 3, self.board.margin_top-4)
+        return Mino(self.queue.pop(0), 3, self.board.h//2-4)
 
     def get_garbage(self):
         garbage = max(0, self.garbage)

@@ -3,55 +3,61 @@ pygame.init()
 
 import sys
 import time
-from stuff.bot import Bot
+import zmq
+from stuff.bot_emu import BotEmu
 from stuff.game import Game
 from stuff.minos import *
 from stuff.utils import *
-from stuff.result import up, down
 
 screen = pygame.display.set_mode((SCREEN_W, SCREEN_H))
 
 clock = pygame.time.Clock()
 
-seed = time.time()
-player_game = Game(seed)
-bot_game = Game(seed)
-bot = Bot(bot_game, 1000)
-bot.set_weights(up, down)
+context = zmq.Context()
+socket = context.socket(zmq.REP)
+socket.bind("tcp://*:5555")
+
+seed = time.time()*1000
+p1_game = Game(seed)
+p2_game = Game(seed)
+bot_2 = BotEmu(p2_game, socket)
 
 while True:
     screen.fill("#333333")
-     
+    
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
             sys.exit()
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_r:
-                player_game.restart()
-                bot_game.restart()
-                bot.restart()
-            player_game.keydown(event.key)
+                seed = time.time()*1000
+                p1_game.restart(seed)
+                p2_game.restart(seed)
+            if event.key in keys_to_code:
+                p1_game.keydown(keys_to_code[event.key])
         if event.type == pygame.KEYUP:
-            player_game.keyup(event.key)
+            if event.key in keys_to_code:
+                p1_game.keyup(keys_to_code[event.key])
 
-    for event in bot.get_events():
-        if event.type == pygame.KEYDOWN:
-            bot_game.keydown(event.key)
-        if event.type == pygame.KEYUP:
-            bot_game.keyup(event.key)
+    for event in bot_2.get_events():
+        type, key = event.split(".")
+        if type == "keydown":
+            p2_game.keydown(key)
+        if type == "keyup":
+            p2_game.keyup(key)
 
-    player_game.draw(screen, (-UNIT*12, 0))
-    bot_game.draw(screen, (UNIT*12, 0))
+    p1_game.draw(screen, (-UNIT*12, 0))
+    p2_game.draw(screen, (UNIT*12, 0))
 
-    dt = clock.tick(120)
+    dt = clock.tick(60)
 
-    player_game.update(dt)
-    bot_game.update(dt)
+    p1_game.update(dt)
+    p2_game.update(dt)
     
-    bot_game.add_garbage(player_game.get_garbage())
-    player_game.add_garbage(bot_game.get_garbage())
+    p2_game.add_garbage(p1_game.get_garbage())
+    p1_game.add_garbage(p2_game.get_garbage())
 
-    bot.update(dt)
+    bot_2.update(dt)
 
     pygame.display.update()
