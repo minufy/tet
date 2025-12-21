@@ -4,11 +4,30 @@ pygame.init()
 import sys
 import time
 import zmq
-from stuff.bot_emu import BotEmu
-from stuff.game import Game
-from stuff.minos import *
-from stuff.utils import *
+from bot_emu import BotEmu
+from tet_utils.game import Game
+from tet_utils.minos import *
 
+keys_to_code = {
+    pygame.K_LSHIFT: "hold",
+    pygame.K_UP: "cw",
+    pygame.K_LCTRL: "ccw",
+    pygame.K_a: "180",
+    pygame.K_LEFT: "left",
+    pygame.K_RIGHT: "right",
+    pygame.K_SPACE: "harddrop",
+    pygame.K_DOWN: "softdrop",
+}
+
+SCREEN_W = 1280
+SCREEN_H = 720
+UNIT = 24
+
+handling = {
+    "das": 117,
+    "arr": 0,
+    "sdf": 0
+}
 screen = pygame.display.set_mode((SCREEN_W, SCREEN_H))
 
 clock = pygame.time.Clock()
@@ -18,8 +37,8 @@ socket = context.socket(zmq.REP)
 socket.bind("tcp://*:5555")
 
 seed = time.time()*1000
-p1_game = Game(seed)
-p2_game = Game(seed)
+p1_game = Game(handling, seed)
+p2_game = Game(handling, seed)
 bot_2 = BotEmu(p2_game, socket)
 
 while True:
@@ -47,8 +66,8 @@ while True:
         if type == "keyup":
             p2_game.keyup(key)
 
-    p1_game.draw(screen, (-UNIT*12, 0))
-    p2_game.draw(screen, (UNIT*12, 0))
+    p1_game.draw(screen, UNIT, (-UNIT*12, 0))
+    p2_game.draw(screen, UNIT, (UNIT*12, 0))
 
     dt = clock.tick(60)
 
