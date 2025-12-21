@@ -14,7 +14,7 @@ screen = pygame.display.set_mode((SCREEN_W, SCREEN_H))
 clock = pygame.time.Clock()
 
 game = Game()
-bot = Bot(game, 1)
+bot = Bot(game, 20)
 bot.set_weights(up, down)
 
 def draw_hud(screen, bot, game):
@@ -83,8 +83,9 @@ while True:
     draw_hud(screen, bot, game)
 
     dt = clock.tick(120)
-    
+
     game.update(dt)
     bot.update(dt)
+    # print(bot.get_scores(game.board))
 
     pygame.display.update()

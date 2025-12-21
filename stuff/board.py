@@ -36,3 +36,9 @@ class Board:
             for x, dot in enumerate(row):
                 if dot:
                     self.grid[mino.y+y][mino.x+x] = mino.type
+                    
+    def __repr__(self):
+        s = "-"*self.w+"\n"
+        for y in range(20, self.h):
+            s += "".join(self.grid[y])+"\n"
+        return s

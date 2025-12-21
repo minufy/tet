@@ -74,10 +74,13 @@ class Bot:
         self.depth = DEPTH
         self.best_count = BEST_COUNT
 
-    def restart(self):
+    def sync(self):
         self.board = TestBoard(self.game.board.grid)
         self.queue = [self.game.mino.type]+self.game.queue.copy()
         self.last_queue = []
+
+    def restart(self):
+        self.sync()
         self.inputs = []
         self.think_timer = 0
         self.hold_type = None
@@ -127,7 +130,7 @@ class Bot:
                         continue
                     
                     self.hard_drop(mino, board)
-                    score = self.get_score(board)
+                    score = sum(self.get_scores(board))
                     self.line_clear(board)
                     
                     hold = None
@@ -173,20 +176,26 @@ class Bot:
                     break
         return heights
                 
-    def get_well_depth(self, board):
+    def get_well_depths(self, board):
         heights = self.get_heights(board)
-        well_depth = 0
+        well_depths = []
         for x in range(board.w):
             left = -1 if x == 0 else heights[x-1]
             right = -1 if x == board.w-1 else heights[x+1]
             if left == -1: left = right
             if right == -1: right = left
             h = heights[x]
-            depth = left-h+right-h
-            if depth < 8:
-                continue
-            well_depth = max(well_depth, depth)
-        return well_depth
+            depth = 0
+            if left > h and right > h:
+                depth += left-h
+                depth += right-h
+            well_depths.append(depth/2)
+        return well_depths
+        
+    def get_well_depth_sum(self, board):
+        well_depths = self.get_well_depths(board)
+        well_depths.sort()
+        return sum(well_depths[:-1])
 
     def get_lines(self, board):
         count = 0
@@ -218,21 +227,21 @@ class Bot:
         change_rate = sum(diffs)/board.w
         return change_rate
 
-    def get_score(self, board):
+    def get_scores(self, board):
         weights = self.get_weights(board)
         lines = LINE_TABLE[self.get_mode(board)][self.get_lines(board)]
         change_rate = self.get_change_rate(board)
         holes = self.get_holes(board)
         avg_height = sum(self.get_heights(board))/board.w
-        well_depth = self.get_well_depth(board)
+        well_depth_sum = self.get_well_depth_sum(board)
 
         lines *= weights["lines"]
         change_rate *= weights["change_rate"]
         holes *= weights["holes"]
         avg_height *= weights["avg_height"]
-        well_depth *= weights["well_depth"]
+        well_depth_sum *= weights["well_depth_sum"]
 
-        return lines+change_rate+holes+avg_height+well_depth
+        return lines, change_rate, holes, avg_height, well_depth_sum
 
     def research(self, depth, move):
         mino_1 = None
@@ -263,20 +272,23 @@ class Bot:
                 self.last_queue = bag
                 self.queue += bag
 
-        self.think_timer += dt
-        if self.think_timer >= self.think_time:
-            self.think_timer = 0
-            if len(self.queue) >= max(DEPTH, 2):
-                moves = self.search_moves(self.queue[0], self.hold_type or self.queue[1], self.board, 0)
-                if moves:
-                    move = moves[-1]
-                    self.exectue_move(move)
-                    self.place(move.mino, self.board)
-                    self.line_clear(self.board)
-                    if move.hold and not self.held:
-                        self.held = True
+        if self.game.board.grid == self.board.grid:
+            self.think_timer += dt
+            if self.think_timer >= self.think_time:
+                self.think_timer = 0
+                if len(self.queue) >= max(DEPTH, 2):
+                    moves = self.search_moves(self.queue[0], self.hold_type or self.queue[1], self.board, 0)
+                    if moves:
+                        move = moves[-1]
+                        self.exectue_move(move)
+                        self.place(move.mino, self.board)
+                        self.line_clear(self.board)
+                        if move.hold and not self.held:
+                            self.held = True
+                            self.queue.pop(0)
                         self.queue.pop(0)
-                    self.queue.pop(0)
+        elif self.inputs == []:
+            self.sync()
 
         if self.inputs:
             self.inputs[0].update(dt)

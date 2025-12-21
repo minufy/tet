@@ -33,14 +33,14 @@ class Test:
             "change_rate": -random.random(),
             "holes": -random.random(),
             "avg_height": 0,
-            "well_depth": random.random()*0.03,
+            "well_depth_sum": -random.random(),
         }
         weights_downstack = {
             "lines": random.random(),
             "change_rate": -random.random(),
             "holes": -random.random(),
             "avg_height": -random.random(),
-            "well_depth": -random.random()*0.03,
+            "well_depth_sum": -random.random(),
         }
 
         if self.prev_weights_upstack:
@@ -76,10 +76,10 @@ class Result:
         self.weights_upstack = weights_upstack
         self.weights_downstack = weights_downstack
 
-RATE = 0.4
-TEST_DEPTH = 15
-TEST_COUNT = 5
-TEST_DURATION = 500
+RATE = 0.2
+TEST_DEPTH = 3
+TEST_COUNT = 2
+TEST_DURATION = 2000
 
 def run_game(bot, game):
     for _ in range(TEST_DURATION):
@@ -94,7 +94,7 @@ def run_game(bot, game):
 
         game.update(1)
         bot.update(1)
-        # test.u pdate(1)
+        # test.update(1)
 
 def run_test(args):
     i, prev_result = args
@@ -104,7 +104,7 @@ def run_test(args):
     
     run_game(bot, game)
     # score = game.attack
-    score = game.attack+bot.get_score(game.board)
+    score = game.attack+sum(bot.get_scores(game.board))
     print(f"{i+1}/{TEST_COUNT}")
     print(f"score: {score}")
     return Result(score, test.weights_upstack, test.weights_downstack)
