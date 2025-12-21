@@ -23,6 +23,9 @@ class Game:
         self.held = False
         self.attack = 0
 
+        self.send_garbage = 0
+        self.take_garbage = 0
+
     def draw_mino(self, screen, pos, mx, my, mt, mr, color=None):
         if color == None:
             color = MINO_COLORS[mt]
@@ -50,11 +53,17 @@ class Game:
             self.draw_mino(screen, pos, 11+x, y+1+i*gap, mino_type, 0, MINO_COLORS[mino_type])
 
     def hard_drop(self):
+        self.board.add_garbage(self.take_garbage, round(self.rng.nextFloat()))
+        self.take_garbage = 0
         self.held = False
         for _ in range(self.board.h):
             if self.mino.move(0, 1, self.board) == False:
                 self.board.place(self.mino)
-                self.attack += ATTACK_TABLE[self.board.line_clear()]
+                
+                attack = ATTACK_TABLE[self.board.line_clear()]
+                self.send_garbage += attack
+                self.attack += attack
+                
                 self.next()
                 break
 
@@ -109,12 +118,12 @@ class Game:
                 break
         self.draw_mino(screen, pos, self.mino.x, shadow_mino.y, self.mino.type, self.mino.rotation, MINO_COLORS["X"])
 
-    def draw(self, screen):
-        pos = (SCREEN_W/2-UNIT*10/2, SCREEN_H/2-UNIT*20/2)
-        pos_m = (pos[0], pos[1]-self.board.margin_top*UNIT)
-        self.board.draw(screen, pos_m)
-        self.draw_shadow(screen, pos_m)
-        self.draw_mino(screen, pos_m, self.mino.x, self.mino.y, self.mino.type, self.mino.rotation)
+    def draw(self, screen, offset=(0, 0)):
+        pos = (SCREEN_W/2-UNIT*10/2+offset[0], SCREEN_H/2-UNIT*20/2+offset[1])
+        pos_margin = (pos[0], pos[1]-self.board.margin_top*UNIT)
+        self.board.draw(screen, pos_margin)
+        self.draw_shadow(screen, pos_margin)
+        self.draw_mino(screen, pos_margin, self.mino.x, self.mino.y, self.mino.type, self.mino.rotation)
         if self.hold_type:
             color = MINO_COLORS[self.hold_type]
             if self.held:
@@ -127,3 +136,11 @@ class Game:
 
     def pop_queue(self):
         return Mino(self.queue.pop(0), 3, self.board.margin_top-4)
+
+    def get_garbage(self):
+        garbage = self.send_garbage
+        self.send_garbage = 0
+        return garbage
+    
+    def set_garbage(self, amount):
+        self.take_garbage += amount

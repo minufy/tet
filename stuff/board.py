@@ -21,14 +21,15 @@ class Board:
 
     def line_clear(self):
         count = 0
-        for y in range(self.h):
+        for y in range(self.h-1, -1, -1):
             for x in range(self.w):
                 if self.grid[y][x] == " ":
                     break
             else:
                 count += 1
                 self.grid.pop(y)
-                self.grid.insert(0, [" "]*self.w)
+        for _ in range(count):
+            self.grid.insert(0, [" "]*self.w)
         return count
 
     def place(self, mino):
@@ -36,7 +37,14 @@ class Board:
             for x, dot in enumerate(row):
                 if dot:
                     self.grid[mino.y+y][mino.x+x] = mino.type
-                    
+
+    def add_garbage(self, amount, pos):
+        garbage_line = ["X"]*self.w
+        garbage_line[pos] = " "
+        for _ in range(amount):
+            self.grid.pop(0)
+            self.grid.append(garbage_line.copy())
+
     def __repr__(self):
         s = "-"*self.w+"\n"
         for y in range(20, self.h):

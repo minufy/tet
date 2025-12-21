@@ -19,7 +19,7 @@ class RNG:
             return array
 
         for i in range(len(array)-1, 0, -1):
-            r = math.floor(self.nextFloat() * (i + 1))
+            r = math.floor(self.nextFloat() * (i+1))
             array[i], array[r] = array[r], array[i]
 
         return array
