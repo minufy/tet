@@ -5,23 +5,45 @@
 
 # 정보 
 ## 서버 -> 봇 데이터
-```py
-미노_종류 = ["Z", "L", "O", "S", "I", "J", "T"]
+### 설명
+| 항목 | 타입 | 설명 |
+| - | - | - |
+| state | `str` | 게임 진행 여부 (`started`/`not_started`) |
+| grid | `list[list[str]]` | 게임 판. 각 셀은 공백, 미노 타입 또는 X(가비지) 중 하나 |
+| queue | `list[str]` | 넥스트 |
+| mino_type | `str` | 현재 미노 타입 |
+| hold_mino_type | `str` | 홀드 미노 타입. 없는 경우 빈 문자열 |
+미노 타입: `"Z", "L", "O", "S", "I", "J", "T"`
 
+### 예시 데이터
+```py
 data = {
-    "state": "started" 아니면 "not_started",
-    "grid": 2차원 배열,
-    "queue": 미노_종류들이 들어있는 배열,
-    "mino_type": 미노_종류 중 하나
-    "hold_mino_type": 미노_종류 중 하나
+    "state": "started",
+    "grid": [
+        [" ", " ", ... , " ", " "],
+        [" ", " ", ... , " ", " "],
+        ...
+        [" ", " ", ... , " ", " "],
+        [" ", " ", ... , " ", " "],
+    ],
+    "queue": ["L", "O", "S", "I", "J", "T"],
+    "mino_type": "Z",
+    "hold_mino_type": ""
 }
 ```
 
 ## 봇 -> 서버 데이터
+### 설명
+| 항목 | 타입 | 설명 |
+| - | - | - |
+| events | `list[str]` | 보낼 이벤트 리스트 |
+| index | `int` | 제어할 플레이어 인덱스. 0 또는 1 |
+
+### 예시 데이터
 ```py
 data = {
-  "events": [],
-  "index": 제어할 플레이어 인덱스 (0 아니면 1)
+  "events": ["keydown.right", "keyup.right"],
+  "index": 0
 }
 ```
 
