@@ -37,9 +37,15 @@ socket = context.socket(zmq.REP)
 socket.bind("tcp://*:5555")
 
 seed = time.time()*1000
-p1_game = Game(handling, seed)
-p2_game = Game(handling, seed)
-bot_2 = BotEmu(p2_game, socket)
+games = [
+    Game(handling, seed),
+    Game(handling, seed),
+]
+bots = [
+    BotEmu(games[0]),
+    BotEmu(games[1]),
+]
+ready = {}
 
 while True:
     screen.fill("#333333")
@@ -51,32 +57,56 @@ while True:
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_r:
                 seed = time.time()*1000
-                p1_game.restart(seed)
-                p2_game.restart(seed)
+                games[0].restart(seed)
+                games[1].restart(seed)
             if event.key in keys_to_code:
-                p1_game.keydown(keys_to_code[event.key])
+                games[0].keydown(keys_to_code[event.key])
         if event.type == pygame.KEYUP:
             if event.key in keys_to_code:
-                p1_game.keyup(keys_to_code[event.key])
+                games[0].keyup(keys_to_code[event.key])
 
-    for event in bot_2.get_events():
+    for event in bots[0].get_events():
         type, key = event.split(".")
         if type == "keydown":
-            p2_game.keydown(key)
+            games[0].keydown(key)
         if type == "keyup":
-            p2_game.keyup(key)
+            games[0].keyup(key)
 
-    p1_game.draw(screen, UNIT, (-UNIT*12, 0))
-    p2_game.draw(screen, UNIT, (UNIT*12, 0))
+    for event in bots[1].get_events():
+        type, key = event.split(".")
+        if type == "keydown":
+            games[1].keydown(key)
+        if type == "keyup":
+            games[1].keyup(key)
+
+    games[0].draw(screen, UNIT, (-UNIT*12, 0))
+    games[1].draw(screen, UNIT, (UNIT*12, 0))
 
     dt = clock.tick(60)
 
-    p1_game.update(dt)
-    p2_game.update(dt)
-    
-    p2_game.add_garbage(p1_game.get_garbage())
-    p1_game.add_garbage(p2_game.get_garbage())
+    games[0].update(dt)
+    games[1].update(dt)
 
-    bot_2.update(dt)
+    try:
+        data = socket.recv_json(flags=zmq.NOBLOCK)
+        index = data["index"]
+        if index not in ready:
+            ready[index] = True
+        if len(ready) == len(bots):
+            game_state = bots[index].update(dt, data)
+            socket.send_json(game_state)
+        else:
+            socket.send_json({
+                "state": "not_started",
+                "grid": [],
+                "queue": [],
+                "mino_type": ""
+            })
+        
+    except zmq.Again:
+        pass
+
+    games[0].add_garbage(games[1].get_garbage())
+    games[1].add_garbage(games[0].get_garbage())
 
     pygame.display.update()

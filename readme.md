@@ -9,16 +9,18 @@
 미노_종류 = ["Z", "L", "O", "S", "I", "J", "T"]
 
 data = {
+    "state": "started" 아니면 "not_started",
     "grid": 2차원 배열,
     "queue": 미노_종류들이 들어있는 배열,
-    "mino_type": 미노_종류 중 하나,
+    "mino_type": 미노_종류 중 하나
 }
 ```
 
 ## 봇 -> 서버 데이터
 ```py
 data = {
-  "events": []
+  "events": [],
+  "index": 제어할 플레이어 인덱스 (0 아니면 1)
 }
 ```
 
