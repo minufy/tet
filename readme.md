@@ -13,6 +13,7 @@ data = {
     "grid": 2차원 배열,
     "queue": 미노_종류들이 들어있는 배열,
     "mino_type": 미노_종류 중 하나
+    "hold_mino_type": 미노_종류 중 하나
 }
 ```
 

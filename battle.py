@@ -100,7 +100,8 @@ while True:
                 "state": "not_started",
                 "grid": [],
                 "queue": [],
-                "mino_type": ""
+                "mino_type": "",
+                "hold_mino_type": ""
             })
         
     except zmq.Again:
