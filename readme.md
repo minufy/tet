@@ -13,6 +13,7 @@
 | queue | `list[str]` | 넥스트 |
 | mino_type | `str` | 현재 미노 타입 |
 | hold_mino_type | `str` | 홀드 미노 타입. 없는 경우 빈 문자열 |
+| handling | `dict[str]` | 핸들링. 키는 `das`, `arr`, `sdf` |
 
 미노 타입: `"Z", "L", "O", "S", "I", "J", "T"`
 
@@ -29,7 +30,12 @@ data = {
     ],
     "queue": ["L", "O", "S", "I", "J", "T"],
     "mino_type": "Z",
-    "hold_mino_type": ""
+    "hold_mino_type": "",
+    "handling": {
+        "das": 200,
+        "arr": 30,
+        "sdf": 30
+    }
 }
 ```
 

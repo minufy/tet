@@ -11,7 +11,8 @@ class BotEmu:
             "grid": self.game.board.grid,
             "queue": self.game.queue,
             "mino_type": self.game.mino.type,
-            "hold_mino_type": self.game.hold_type
+            "hold_mino_type": self.game.hold_type,
+            "handling": self.game.handling
         }
         return game_state
 
