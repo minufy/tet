@@ -4,6 +4,18 @@
 [예시 봇](https://github.com/minufy/tet_minu_bot)
 
 # 정보 
+## 게임 -> 봇 데이터 (로컬)
+### 설명
+| 항목 | 타입 | 설명 |
+| - | - | - |
+| game.board.grid | `list[list[str]]` | 게임 판. 각 셀은 공백, 미노 타입 또는 X(가비지) 중 하나 |
+| game.queue | `list[str]` | 넥스트 |
+| game.mino_type | `str` | 현재 미노 타입 |
+| game.hold_type | `str` | 홀드 미노 타입. 없는 경우 빈 문자열 |
+| game.handling | `dict[str]` | 핸들링. 키는 `das`, `arr`, `sdf` |
+
+미노 타입: `"Z", "L", "O", "S", "I", "J", "T"`
+
 ## 서버 -> 봇 데이터
 ### 설명
 | 항목 | 타입 | 설명 |
