@@ -24,8 +24,8 @@ SCREEN_H = 720
 UNIT = 24
 
 handling = {
-    "das": 117,
-    "arr": 0,
+    "das": 200,
+    "arr": 20,
     "sdf": 0
 }
 screen = pygame.display.set_mode((SCREEN_W, SCREEN_H))
@@ -37,6 +37,7 @@ socket = context.socket(zmq.REP)
 socket.bind("tcp://*:5555")
 
 seed = time.time()*1000
+seed = 1
 games = [
     Game(handling, seed),
     Game(handling, seed),
@@ -44,7 +45,7 @@ games = [
 bots = [
     BotEmu(games[0]),
     BotEmu(games[1]),
-]
+] 
 ready = {}
 
 while True:
@@ -101,7 +102,8 @@ while True:
                 "grid": [],
                 "queue": [],
                 "mino_type": "",
-                "hold_mino_type": ""
+                "hold_mino_type": "",
+                "handling": games[index].handling
             })
         
     except zmq.Again:
